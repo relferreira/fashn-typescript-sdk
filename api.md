@@ -7,6 +7,7 @@ Types:
 Methods:
 
 - <code title="post /run">client.run.<a href="./src/resources/run.ts">predict</a>({ ...params }) -> RunPredictResponse</code>
+- <code title="post /run">client.run.<a href="./src/resources/run.ts">subscribe</a>({ ...params }) -> Promise&lt;StatusRetrieveResponse&gt;</code>
 
 # Status
 
