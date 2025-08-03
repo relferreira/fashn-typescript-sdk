@@ -3,6 +3,10 @@
 import { APIResource } from '../core/resource';
 import { APIPromise } from '../core/api-promise';
 import { RequestOptions } from '../internal/request-options';
+import { StatusRetrieveResponse } from './status';
+
+const DEFAULT_POOL_INTERVAL = 500;
+const DEFAULT_TIMEOUT = 120000;
 
 export class Run extends APIResource {
   /**
@@ -21,6 +25,80 @@ export class Run extends APIResource {
    */
   predict(body: RunPredictParams, options?: RequestOptions): APIPromise<RunPredictResponse> {
     return this._client.post('/run', { body, ...options });
+  }
+
+  /**
+   * Subscribe to a prediction status
+   *
+   * @example
+   * ```ts
+   * const response = await client.run.subscribe({
+   *   inputs: {
+   *     model_image: 'http://example.com/path/to/model.jpg',
+   *     garment_image: 'http://example.com/path/to/garment.jpg',
+   *   },
+   *   model_name: 'tryon-v1.6',
+   *   onEnqueued: (requestId) => {
+   *     console.log('Prediction enqueued with ID:', requestId);
+   *   },
+   *   onQueueUpdate: (status) => console.log(status),
+   * });
+   * ```
+   */
+  async subscribe(body: RunSubscribeParams, options?: RequestOptions): Promise<StatusRetrieveResponse> {
+    const response = (await this._client.post('/run', { body, ...options })) as RunPredictResponse;
+    if (!response.id) throw new Error('Prediction ID is required');
+
+    if (body.onEnqueued) body.onEnqueued(response.id);
+
+    return this.subscribeToStatus(response.id, body);
+  }
+
+  private subscribeToStatus(id: string, body: RunSubscribeParams): Promise<StatusRetrieveResponse> {
+    return new Promise((resolve, reject) => {
+      const pollInterval = body.poolInterval ?? DEFAULT_POOL_INTERVAL;
+      const timeout = body.timeout ?? DEFAULT_TIMEOUT;
+
+      let pollIntervalId: NodeJS.Timeout;
+      let timeoutId: NodeJS.Timeout;
+
+      const clearTimeouts = () => {
+        clearTimeout(pollIntervalId);
+        clearTimeout(timeoutId);
+      };
+
+      if (timeout) {
+        timeoutId = setTimeout(() => {
+          clearTimeouts();
+          // TODO cancel prediction
+          reject(new Error('Timeout'));
+        }, timeout);
+      }
+
+      const pool = async () => {
+        try {
+          const status = await this._client.status.retrieve(id);
+          if (body.onQueueUpdate) {
+            body.onQueueUpdate(status);
+          }
+          if (status.status === 'completed') {
+            clearTimeouts();
+            return resolve(status);
+          }
+          if (status.status === 'failed') {
+            clearTimeouts();
+            return reject(new Error(status.error ?? 'Unknown error'));
+          }
+
+          pollIntervalId = setTimeout(pool, pollInterval);
+        } catch (error) {
+          clearTimeouts();
+          reject(error);
+        }
+      };
+
+      pool().catch(reject);
+    });
   }
 }
 
@@ -51,6 +129,28 @@ export interface RunPredictParams {
    *   resolution. Slightly faster than v1.6
    */
   model_name: 'tryon-v1.6' | 'tryon-v1.5';
+}
+
+export interface RunSubscribeParams extends RunPredictParams {
+  /**
+   * The interval in milliseconds to poll the status of the prediction.
+   */
+  poolInterval?: number;
+
+  /**
+   * The timeout in milliseconds to cancel the prediction.
+   */
+  timeout?: number;
+
+  /**
+   * A callback function that is called when the prediction is enqueued.
+   */
+  onEnqueued?: (requestId: string) => void;
+
+  /**
+   * A callback function that is called when the prediction is updated.
+   */
+  onQueueUpdate?: (status: StatusRetrieveResponse) => void;
 }
 
 export namespace RunPredictParams {
