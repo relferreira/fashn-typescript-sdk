@@ -51,10 +51,14 @@ export class Run extends APIResource {
 
     if (body.onEnqueued) body.onEnqueued(response.id);
 
-    return this.subscribeToStatus(response.id, body);
+    return this.subscribeToStatus(response.id, body, options);
   }
 
-  private subscribeToStatus(id: string, body: RunSubscribeParams): Promise<StatusRetrieveResponse> {
+  private subscribeToStatus(
+    id: string,
+    body: RunSubscribeParams,
+    options?: RequestOptions,
+  ): Promise<StatusRetrieveResponse> {
     return new Promise((resolve, reject) => {
       const pollInterval = body.poolInterval ?? DEFAULT_POOL_INTERVAL;
       const timeout = body.timeout ?? DEFAULT_TIMEOUT;
@@ -77,7 +81,7 @@ export class Run extends APIResource {
 
       const pool = async () => {
         try {
-          const status = await this._client.status.retrieve(id);
+          const status = await this._client.status.retrieve(id, options);
           if (body.onQueueUpdate) {
             body.onQueueUpdate(status);
           }
