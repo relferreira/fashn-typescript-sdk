@@ -29,15 +29,21 @@ const client = new ScriboFashnAI({
   apiKey: process.env['SCRIBO_FASHN_AI_API_KEY'], // This is the default and can be omitted
 });
 
-const response = await client.run.predict({
+const response = await client.run.subscribe({
   inputs: {
     garment_image: 'http://example.com/path/to/garment.jpg',
     model_image: 'http://example.com/path/to/model.jpg',
   },
   model_name: 'tryon-v1.6',
+  onEnqueued: (requestId) => {
+    console.log('Prediction enqueued with ID:', requestId);
+  },
+  onQueueUpdate: (status) => {
+    console.log(status);
+  },
 });
 
-console.log(response.id);
+console.log(response);
 ```
 
 ### Request & Response types
