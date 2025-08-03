@@ -1,0 +1,1 @@
+# scribo-fashn-ai-typescript
