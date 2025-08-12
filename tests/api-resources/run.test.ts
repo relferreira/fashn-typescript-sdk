@@ -8,7 +8,7 @@ const client = new ScriboFashnAI({
 });
 
 describe('resource run', () => {
-  // skipped: tests are disabled for the time being
+  // Prism tests are disabled
   test.skip('predict: only required params', async () => {
     const responsePromise = client.run.predict({
       inputs: {
@@ -26,7 +26,7 @@ describe('resource run', () => {
     expect(dataAndResponse.response).toBe(rawResponse);
   });
 
-  // skipped: tests are disabled for the time being
+  // Prism tests are disabled
   test.skip('predict: required and optional params', async () => {
     const response = await client.run.predict({
       inputs: {

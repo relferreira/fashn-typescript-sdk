@@ -8,7 +8,7 @@ const client = new ScriboFashnAI({
 });
 
 describe('resource status', () => {
-  // skipped: tests are disabled for the time being
+  // Prism tests are disabled
   test.skip('retrieve', async () => {
     const responsePromise = client.status.retrieve('123a87r9-4129-4bb3-be18-9c9fb5bd7fc1-u1');
     const rawResponse = await responsePromise.asResponse();
