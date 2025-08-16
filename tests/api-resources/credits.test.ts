@@ -8,7 +8,7 @@ const client = new ScriboFashnAI({
 });
 
 describe('resource credits', () => {
-  // skipped: tests are disabled for the time being
+  // Prism tests are disabled
   test.skip('retrieveBalance', async () => {
     const responsePromise = client.credits.retrieveBalance();
     const rawResponse = await responsePromise.asResponse();
