@@ -720,9 +720,11 @@ export class ScriboFashnAI {
   status: API.Status = new API.Status(this);
   credits: API.Credits = new API.Credits(this);
 }
+
 ScriboFashnAI.Run = Run;
 ScriboFashnAI.Status = Status;
 ScriboFashnAI.Credits = Credits;
+
 export declare namespace ScriboFashnAI {
   export type RequestOptions = Opts.RequestOptions;
 
